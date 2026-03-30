@@ -14,12 +14,17 @@ const inter = Inter({
 export const metadata: Metadata = {
   // --- Título e Descrição ---
   title: {
-    default: 'No Fear CS2 - Gerador de Times', // Título padrão para a página inicial
-    template: '%s | No Fear CS2', // Template para outras páginas (ex: "Histórico | No Fear CS2")
+    default: 'No Fear CS2 - Gerador de Times',
+    template: '%s | No Fear CS2',
   },
   description: 'Balanceador de times determinístico para Counter-Strike 2 da comunidade No Fear. Crie partidas justas com algoritmo de seed reproduzível.',
   
-  // --- Palavras-chave para SEO ---
+  // --- 🔥 VERIFICAÇÃO GOOGLE (ADICIONAR ISSO) ---
+  verification: {
+    google: 'N6zG8YZM5BN_-dn76IPUaMAewPo8p_2vtXhOOS4aAM0',
+  },
+
+  // --- Palavras-chave ---
   keywords: [
     'CS2',
     'Counter-Strike 2',
@@ -32,30 +37,28 @@ export const metadata: Metadata = {
     'Determinístico',
   ],
 
-  // --- Autor e Publicador ---
+  // --- Autor ---
   authors: [{ name: 'No Fear Community' }],
   publisher: 'No Fear Community',
 
-  // --- Favicon e Ícones ---
-  // IMPORTANTE: Você precisa adicionar um arquivo `icon.png` ou `favicon.ico` na pasta `app`
-  // Se não tiver, comente a linha abaixo ou substitua pela URL do seu ícone.
+  // --- Ícones ---
   icons: {
-    icon: '/icon.png', // <-- Substitua pelo nome do seu arquivo de ícone na pasta `app`
-    shortcut: '/favicon.ico', // Opcional, se você tiver um .ico
-    apple: '/apple-touch-icon.png', // Opcional, para ícones na tela inicial de dispositivos Apple
+    icon: '/icon.png',
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
 
-  // --- Metadados para Redes Sociais (Open Graph) ---
+  // --- Open Graph ---
   openGraph: {
     title: 'No Fear CS2 - Gerador de Times',
     description: 'Crie times balanceados para suas partidas de CS2 de forma rápida e justa.',
-    url: 'https://seu-dominio-aqui.com', // <-- IMPORTANTE: Substitua pela URL do seu site
+    url: 'https://cs2-team-balance.vercel.app', // ⚠️ CORRIGI AQUI
     siteName: 'No Fear CS2',
     type: 'website',
     locale: 'pt_BR',
     images: [
       {
-        url: '/og-image.png', // <-- Crie uma imagem (1200x630px) para previews no Facebook/LinkedIn
+        url: '/og-image.png',
         width: 1200,
         height: 630,
         alt: 'No Fear CS2 - Gerador de Times',
@@ -63,17 +66,17 @@ export const metadata: Metadata = {
     ],
   },
 
-  // --- Metadados para o Twitter ---
+  // --- Twitter ---
   twitter: {
     card: 'summary_large_image',
     title: 'No Fear CS2 - Gerador de Times',
     description: 'Crie times balanceados para suas partidas de CS2 de forma rápida e justa.',
-    images: ['/og-image.png'], // Usa a mesma imagem do Open Graph
+    images: ['/og-image.png'],
   },
 
-  // --- Outras configurações ---
+  // --- Outros ---
   other: {
-    'theme-color': '#080c14', // Cor da barra de endereço em navegadores móveis
+    'theme-color': '#080c14',
   },
 };
 
