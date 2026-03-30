@@ -1,0 +1,36 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// MATCH - Log de Auditoria para Partidas
+// ─────────────────────────────────────────────
+// Cada partida é totalmente reproduzível via seed
+// Sistema determinístico e auditável
+// ─────────────────────────────────────────────
+
+model Match {
+  id        String   @id @default(cuid())
+  seed      String   // Seed para reprodutibilidade (string para suportar números grandes)
+  mode      String   // "RANDOM" ou "BALANCED"
+  
+  // Jogadores como JSON: [{ name: string, level: number }]
+  players   String   // JSON stringified
+  
+  // Resultado como JSON: { ct: Player[], tr: Player[], ctSum: number, trSum: number }
+  result    String   // JSON stringified
+  
+  diff      Int      // Diferença de força entre times
+  createdAt DateTime @default(now())
+  
+  @@index([createdAt])
+  @@index([seed])
+}
