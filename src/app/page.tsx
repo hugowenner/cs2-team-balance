@@ -1068,7 +1068,37 @@ export default function NoFearCommunityGames() {
             </motion.div>
           </TabsContent>
         </Tabs>
+          {/* 🔥 SEO CONTENT (IMPORTANTE PARA GOOGLE) */}
+          <section className="mt-16 max-w-3xl mx-auto text-sm text-white/70 space-y-4 px-4">
+            <h2 className="text-lg font-bold text-white">
+              CS2 Team Balance Tool
+            </h2>
 
+            <p>
+              This CS2 team balance tool automatically creates fair teams in Counter-Strike 2.
+              It distributes players based on skill level to ensure competitive and balanced matches.
+            </p>
+
+            <h3 className="text-md font-semibold text-white">
+              How to balance teams in CS2
+            </h3>
+
+            <p>
+              Balancing teams manually in CS2 can be difficult. This tool uses a deterministic algorithm
+              to generate fair teams instantly. Just enter player levels and generate teams.
+            </p>
+
+            <h3 className="text-md font-semibold text-white">
+              Why use this CS2 team balancer?
+            </h3>
+
+            <ul className="list-disc ml-4">
+              <li>Fair matches</li>
+              <li>Fast team generation</li>
+              <li>Perfect for 5v5 lobbies</li>
+              <li>Ideal for friends and competitive games</li>
+            </ul>
+          </section>
         {/* Footer */}
         <motion.div
           initial={{ opacity: 0 }}

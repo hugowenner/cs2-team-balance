@@ -1,80 +1,81 @@
 // app/layout.tsx
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google'; // Usando a fonte Inter, que é mais comum e limpa para este tipo de UI
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
-// Configuração da fonte Inter
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-  display: 'swap', // Melhora a performance de carregamento da fonte
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  // --- Título e Descrição ---
+  // --- TÍTULO ---
   title: {
-    default: 'No Fear CS2 - Gerador de Times',
-    template: '%s | No Fear CS2',
+    default: 'CS2 Team Balance Tool | Create Fair Teams in Counter-Strike 2',
+    template: '%s | CS2 Team Balance',
   },
-  description: 'Balanceador de times determinístico para Counter-Strike 2 da comunidade No Fear. Crie partidas justas com algoritmo de seed reproduzível.',
-  
-  // --- 🔥 VERIFICAÇÃO GOOGLE (ADICIONAR ISSO) ---
+
+  // --- DESCRIÇÃO ---
+  description:
+    'Free CS2 team balance tool. Automatically create fair teams in Counter-Strike 2 using a smart algorithm. Perfect for 5v5 matches.',
+
+  // --- 🔥 VERIFICAÇÃO GOOGLE ---
   verification: {
     google: 'N6zG8YZM5BN_-dn76IPUaMAewPo8p_2vtXhOOS4aAM0',
   },
 
-  // --- Palavras-chave ---
+  // --- 🔥 KEYWORDS (SEO REAL) ---
   keywords: [
-    'CS2',
-    'Counter-Strike 2',
-    'Gerador de Times',
-    'Balanceador de Times',
-    'No Fear',
-    '5v5',
-    'Algoritmo',
-    'Seed',
-    'Determinístico',
+    'cs2 team balance',
+    'cs2 team balancer',
+    'balanceador cs2',
+    'cs2 team generator',
+    'counter strike 2 team balance',
+    'cs2 5v5 team maker',
   ],
 
-  // --- Autor ---
+  // --- AUTOR ---
   authors: [{ name: 'No Fear Community' }],
   publisher: 'No Fear Community',
 
-  // --- Ícones ---
+  // --- ÍCONES ---
   icons: {
     icon: '/icon.png',
     shortcut: '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
 
-  // --- Open Graph ---
+  // --- OPEN GRAPH (REDES SOCIAIS) ---
   openGraph: {
-    title: 'No Fear CS2 - Gerador de Times',
-    description: 'Crie times balanceados para suas partidas de CS2 de forma rápida e justa.',
-    url: 'https://cs2-team-balance.vercel.app', // ⚠️ CORRIGI AQUI
-    siteName: 'No Fear CS2',
+    title: 'CS2 Team Balance Tool',
+    description:
+      'Create balanced teams automatically for Counter-Strike 2 matches using a smart algorithm.',
+    url: 'https://cs2-team-balance.vercel.app',
+    siteName: 'CS2 Team Balance',
     type: 'website',
-    locale: 'pt_BR',
+    locale: 'en_US',
     images: [
       {
-        url: '/og-image.png',
+        url: 'https://cs2-team-balance.vercel.app/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'No Fear CS2 - Gerador de Times',
+        alt: 'CS2 Team Balance Tool',
       },
     ],
   },
 
-  // --- Twitter ---
+  // --- TWITTER ---
   twitter: {
     card: 'summary_large_image',
-    title: 'No Fear CS2 - Gerador de Times',
-    description: 'Crie times balanceados para suas partidas de CS2 de forma rápida e justa.',
-    images: ['/og-image.png'],
+    title: 'CS2 Team Balance Tool',
+    description:
+      'Automatically create fair teams in Counter-Strike 2 with this free tool.',
+    images: ['https://cs2-team-balance.vercel.app/og-image.png'],
   },
 
-  // --- Outros ---
+  // --- OUTROS ---
   other: {
     'theme-color': '#080c14',
   },
@@ -82,14 +83,14 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html 
-      lang="pt-BR" // Idioma principal do site
-      suppressHydrationWarning 
-      className={`${inter.variable} dark`} // Adiciona a variável da fonte e a classe 'dark' para o tema
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} dark`}
     >
       <body
         className={`
