@@ -23,6 +23,9 @@ import {
   Check
 } from 'lucide-react';
 
+import { Header } from "@/components/layout/Header";
+import FooterAccordion from '@/components/layout/FooterAccordion';
+
 // Components
 import { PlayerInput } from '@/components/players/PlayerInput';
 import { TeamCard } from '@/components/teams/TeamCard';
@@ -40,6 +43,7 @@ import type { Match } from '@/types/match';
 
 export default function NoFearCommunityGames() {
   // Estado para o modal de visualização
+  const [activeTab, setActiveTab] = useState("play");
   const [selectedMatchForView, setSelectedMatchForView] = useState<Match | null>(null);
   const [isRecreating, setIsRecreating] = useState(false);
 
@@ -122,6 +126,7 @@ export default function NoFearCommunityGames() {
 
   const handleTabChange = useCallback(
     (tab: string) => {
+      setActiveTab(tab);
       if (tab === 'history') {
         loadHistory();
       }
@@ -131,31 +136,14 @@ export default function NoFearCommunityGames() {
 
   return (
     <div className="min-h-screen bg-[#080c14] text-white font-sans relative overflow-x-hidden">
-      {/* Background Effects */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div 
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(0, 242, 255, 0.03) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(0, 242, 255, 0.03) 1px, transparent 1px)
-            `,
-            backgroundSize: '40px 40px',
-          }}
-        />
-        <div 
-          className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(0, 242, 255, 0.08) 0%, transparent 70%)' }}
-        />
-        <div 
-          className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full"
-          style={{ background: 'radial-gradient(circle, rgba(255, 42, 42, 0.06) 0%, transparent 70%)' }}
-        />
-      </div>
+      {/* Header - ÚNICO HEADER */}
+      <Header 
+        activeTab={activeTab} 
+        onChangeTab={handleTabChange} 
+      />
 
-      {/* Main Content */}
-      <div className="relative z-10 max-w-6xl mx-auto px-4 py-6 sm:py-10">
-        {/* Header */}
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Header Section */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -188,8 +176,8 @@ export default function NoFearCommunityGames() {
           </p>
         </motion.div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="play" className="w-full" onValueChange={handleTabChange}>
+        {/* Tabs - CORRIGIDO PARA USAR value={activeTab} */}
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full grid grid-cols-2 mb-6 bg-[#0b1220] rounded-xl p-1 h-auto border border-white/10">
             <TabsTrigger 
               value="play" 
@@ -608,36 +596,7 @@ export default function NoFearCommunityGames() {
           isRecreating={isRecreating}
         />
 
-        {/* SEO Content */}
-        <section className="mt-16 max-w-3xl mx-auto text-sm text-white/70 space-y-4 px-4">
-          <h2 className="text-lg font-bold text-white">CS2 Team Balance Tool</h2>
-          <p>
-            This CS2 team balance tool automatically creates fair teams in Counter-Strike 2.
-            It distributes players based on skill level to ensure competitive and balanced matches.
-          </p>
-          <h3 className="text-md font-semibold text-white">How to balance teams in CS2</h3>
-          <p>
-            Balancing teams manually in CS2 can be difficult. This tool uses a deterministic algorithm
-            to generate fair teams instantly. Just enter player levels and generate teams.
-          </p>
-          <h3 className="text-md font-semibold text-white">Why use this CS2 team balancer?</h3>
-          <ul className="list-disc ml-4">
-            <li>Fair matches</li>
-            <li>Fast team generation</li>
-            <li>Perfect for 5v5 lobbies</li>
-            <li>Ideal for friends and competitive games</li>
-          </ul>
-        </section>
-
-        {/* Footer */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="text-center mt-12 text-[10px] text-white/15 font-medium tracking-wider"
-        >
-          CS2 NO FEAR · RNG Determinístico · Sistema Auditável
-        </motion.div>
+        <FooterAccordion />
       </div>
     </div>
   );
