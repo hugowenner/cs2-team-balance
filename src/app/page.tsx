@@ -184,7 +184,7 @@ export default function NoFearCommunityGames() {
           </h1>
 
           <p className="text-xs sm:text-sm text-white/35 font-medium tracking-wide">
-            Balanceamento determinístico · Seed reproduzível · Auditoria completa
+            Monte partidas equilibradas com precisão e jogue em nível competitivo de verdade.
           </p>
         </motion.div>
 
