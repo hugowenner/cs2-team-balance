@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -24,27 +23,32 @@ import {
   Check 
 } from 'lucide-react';
 
-// ─────────────────────────────────────────────
-// TIPOS
-// ─────────────────────────────────────────────
-type Player = { name: string; level: number };
-type GameMode = 'BALANCED' | 'RANDOM';
-type TeamResult = {
+// Types
+interface Player {
+  name: string;
+  level: number;
+}
+
+interface TeamResult {
   ct: Player[];
   tr: Player[];
   ctSum: number;
   trSum: number;
   diff: number;
   total: number;
-};
-type Match = {
+}
+
+interface Match {
   id: string;
   players: Player[];
   result: TeamResult;
   mode: GameMode;
   seed: string;
   createdAt: string;
-};
+  diff: number;
+}
+
+type GameMode = 'BALANCED' | 'RANDOM';
 
 // ─────────────────────────────────────────────
 // COMPONENTE DE INPUT DE JOGADOR
@@ -57,51 +61,49 @@ function PlayerInput({
 }: { 
   index: number; 
   player: Player; 
-  onChange: (index: number, field: string, value: string | number) => void; 
-  hasError: boolean; 
+  onChange: (index: number, field: string, value: string | number) => void;
+  hasError: boolean;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.02 }}
-      className="flex items-center gap-2"
-    >
-      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-white/10 to-white/5 
-        border border-white/20 flex items-center justify-center">
-        <span className="text-xs font-bold text-white/60">
-          {index + 1}
-        </span>
+    <div className="flex gap-2">
+      <div className="w-8 h-10 rounded-lg bg-gradient-to-br from-white/10 to-white/5 
+        border border-white/20 flex items-center justify-center text-[10px] font-black text-white/60">
+        {index + 1}
       </div>
       <Input
-        placeholder={`Jogador ${index + 1}`}
+        placeholder="Nome do jogador"
         value={player.name}
         onChange={(e) => onChange(index, 'name', e.target.value)}
-        className={`flex-1 bg-[#0b1220] border-white/10 text-sm font-medium 
+        className={`flex-1 h-10 bg-[#0b1220] border-white/10 text-sm font-medium
           focus:border-cyan-500/50 focus:shadow-[0_0_20px_rgba(0,242,255,0.1)]
           transition-all duration-200 ${
           hasError && !player.name.trim() 
-            ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.1)]' 
+            ? 'border-red-500/50 bg-red-500/5' 
             : ''
         }`}
       />
-      <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg 
-        bg-gradient-to-r from-white/10 to-white/5 border border-white/20">
-        <span className="text-xs font-bold text-white/60">Nível</span>
+      <div className="relative">
         <select
           value={player.level}
           onChange={(e) => onChange(index, 'level', Number(e.target.value))}
-          className="bg-transparent text-sm font-bold text-white/80 
-            focus:outline-none cursor-pointer"
+          className="h-10 w-16 rounded-lg bg-[#0b1220] border border-white/10 
+            text-sm font-medium text-white/80 appearance-none cursor-pointer
+            focus:border-cyan-500/50 focus:shadow-[0_0_20px_rgba(0,242,255,0.1)]
+            transition-all duration-200 pl-3 pr-7"
         >
-          {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
-            <option key={n} value={n} className="bg-[#0b1220] text-white">
-              {n}
+          {[1,2,3,4,5,6,7,8,9,10].map(lvl => (
+            <option key={lvl} value={lvl} className="bg-[#0b1220] text-white">
+              {lvl}
             </option>
           ))}
         </select>
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+          <svg className="w-3 h-3 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -118,52 +120,65 @@ function TeamCard({
   team: Player[]; 
   side: 'CT' | 'TR'; 
   sum: number; 
-  isStronger: boolean; 
-  delay: number; 
+  isStronger: boolean;
+  delay: number;
 }) {
-  const sideColors = side === 'CT' 
-    ? 'from-cyan-500/20 to-blue-500/20 border-cyan-500/30' 
-    : 'from-red-500/20 to-orange-500/20 border-red-500/30';
+  const sideColors = {
+    CT: 'from-cyan-600 to-blue-600',
+    TR: 'from-red-600 to-orange-600'
+  };
+
+  const sideBg = {
+    CT: 'from-cyan-500/5 to-blue-500/5',
+    TR: 'from-red-500/5 to-orange-500/5'
+  };
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className={`p-4 sm:p-5 rounded-2xl border bg-gradient-to-br ${sideColors} 
-        ${isStronger ? 'ring-2 ring-white/10 ring-offset-2 ring-offset-[#080c14]' : ''}`}
+      className={`p-5 rounded-2xl border border-white/10 bg-gradient-to-br ${sideBg[side]} 
+        relative overflow-hidden group`}
     >
-      <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/10">
+      {/* Glow Effect */}
+      <div 
+        className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 
+          bg-gradient-to-br ${sideColors[side]} opacity-10`}
+      />
+      
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4 relative">
         <div className="flex items-center gap-3">
           <div 
-            className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black
-              bg-gradient-to-br ${side === 'CT' 
-                ? 'from-cyan-600 to-blue-600' 
-                : 'from-red-600 to-orange-600'
-              } shadow-lg`}
+            className={`w-10 h-10 rounded-xl bg-gradient-to-br ${sideColors[side]} 
+              flex items-center justify-center text-lg font-black text-white shadow-lg`}
           >
             {side}
           </div>
           <div>
             <div className="text-[10px] text-white/40 font-bold tracking-widest uppercase">
-              Time
+              Time {side}
             </div>
-            <div className="text-sm font-bold text-white/80">
-              {side === 'CT' ? 'Contra-Terroristas' : 'Terroristas'}
+            <div className="text-2xl font-black text-white">
+              {sum}
+              <span className="text-xs text-white/40 ml-1">pontos</span>
             </div>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-[10px] text-white/40 font-bold tracking-widest uppercase mb-0.5">
-            Total
-          </div>
-          <div className={`text-2xl font-black ${isStronger ? 'text-white' : 'text-white/60'}`}>
-            {sum}
-          </div>
-        </div>
+        {isStronger && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="px-2 py-1 rounded-lg bg-green-500/10 border border-green-500/30"
+          >
+            <span className="text-[10px] font-bold text-green-400">Forte</span>
+          </motion.div>
+        )}
       </div>
 
-      <div className="space-y-2">
+      {/* Players List */}
+      <div className="space-y-2 relative">
         {team.map((p, i) => (
           <motion.div
             key={i}
@@ -174,23 +189,26 @@ function TeamCard({
               hover:bg-white/10 hover:border-white/20 transition-all duration-200"
           >
             <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-white/10 to-white/5 
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 
                 border border-white/20 flex items-center justify-center">
-                <span className="text-[10px] font-bold text-white/60">
-                  {i + 1}
-                </span>
+                <span className="text-[10px] font-bold text-white/60">{i + 1}</span>
               </div>
-              <span className="text-sm font-medium text-white/90 truncate max-w-[140px]">
-                {p.name}
-              </span>
+              <span className="text-sm font-medium text-white/90">{p.name}</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-12 h-6 rounded-full bg-gradient-to-r from-white/10 to-white/5 
-                border border-white/20 flex items-center justify-center">
-                <span className="text-xs font-bold text-white/80">
-                  {p.level}
-                </span>
+              <div className="flex gap-0.5">
+                {[...Array(5)].map((_, j) => (
+                  <div
+                    key={j}
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      j < Math.floor(p.level / 2) 
+                        ? 'bg-gradient-to-r from-cyan-400 to-blue-400' 
+                        : 'bg-white/10'
+                    }`}
+                  />
+                ))}
               </div>
+              <span className="text-xs font-bold text-white/60 w-4 text-right">{p.level}</span>
             </div>
           </motion.div>
         ))}
@@ -200,7 +218,7 @@ function TeamCard({
 }
 
 // ─────────────────────────────────────────────
-// COMPONENTE DE INDICADOR DE BALANCEAMENTO
+// COMPONENTE DE BALANCE INDICATOR
 // ─────────────────────────────────────────────
 function BalanceIndicator({ 
   diff, 
@@ -216,38 +234,25 @@ function BalanceIndicator({
   const ctPercent = (ctSum / total) * 100;
   const trPercent = (trSum / total) * 100;
 
-  const getBalanceColor = () => {
-    if (diff === 0) return 'text-green-400';
-    if (diff <= 2) return 'text-amber-400';
-    return 'text-red-400';
-  };
-
-  const getBalanceText = () => {
-    if (diff === 0) return 'PERFEITAMENTE BALANCEADO';
-    if (diff <= 2) return 'BEM BALANCEADO';
-    return 'DESBALANCEADO';
-  };
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
-      className="p-4 rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: 0.3 }}
+      className="p-4 rounded-xl bg-gradient-to-br from-white/5 to-transparent border border-white/10"
     >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Scale className="w-4 h-4 text-white/40" />
-          <span className="text-xs text-white/40 font-bold tracking-widest uppercase">
-            Qualidade do Balanceamento
-          </span>
+      <div className="text-center mb-3">
+        <div className="text-[10px] text-white/40 font-bold tracking-widest uppercase mb-1">
+          Diferença de Nível
         </div>
-        <span className={`text-xs font-bold ${getBalanceColor()}`}>
-          {getBalanceText()}
-        </span>
+        <div className={`text-2xl font-black ${
+          diff === 0 ? 'text-green-400' : diff <= 2 ? 'text-amber-400' : 'text-red-400'
+        }`}>
+          {diff}
+        </div>
       </div>
-
-      <div className="relative h-8 rounded-full overflow-hidden bg-[#0b1220] border border-white/10">
+      
+      <div className="relative h-8 rounded-full bg-[#0b1220] border border-white/10">
         <div 
           className="absolute left-0 top-0 h-full bg-gradient-to-r from-cyan-600 to-blue-600 
             transition-all duration-1000 ease-out"
@@ -563,6 +568,20 @@ export default function NoFearCommunityGames() {
     }
   }, []);
 
+  // ─────────────────────────────────────────────
+  // FUNÇÃO DE RESET COMPLETO
+  // ─────────────────────────────────────────────
+  const handleReset = useCallback(() => {
+    if (window.confirm("Tem certeza que deseja limpar tudo?")) {
+      setPlayers(Array.from({ length: 10 }, () => ({ name: '', level: 5 })));
+      setResult(null);
+      setCurrentMatch(null);
+      setErrors(false);
+      setCustomSeed('');
+      setUseCustomSeed(false);
+    }
+  }, []);
+
   // Copiar seed
   const handleCopySeed = useCallback(() => {
     if (currentMatch?.seed) {
@@ -681,27 +700,10 @@ export default function NoFearCommunityGames() {
                   <Label className="text-xs text-white/50 mb-2 block">Modo de Geração</Label>
                   <div className="flex gap-2">
                     <Button
-                      variant={mode === 'RANDOM' ? 'default' : 'outline'}
                       size="sm"
-                      onClick={() => setMode('RANDOM')}
-                      className={`flex-1 font-medium transition-all duration-200 ${
-                        mode === 'RANDOM' 
-                          ? 'bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white shadow-lg shadow-amber-600/20' 
-                          : 'bg-[#0b1220] border-white/20 text-white/60 hover:text-white hover:border-white/30 hover:bg-white/5'
-                      }`}
-                    >
-                      <Shuffle className="w-3 h-3 mr-1" />
-                      Random
-                    </Button>
-                    <Button
-                      variant={mode === 'BALANCED' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setMode('BALANCED')}
-                      className={`flex-1 font-medium transition-all duration-200 ${
-                        mode === 'BALANCED' 
-                          ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white shadow-lg shadow-green-600/20' 
-                          : 'bg-[#0b1220] border-white/20 text-white/60 hover:text-white hover:border-white/30 hover:bg-white/5'
-                      }`}
+                      className="flex-1 font-medium bg-gradient-to-r from-green-600 to-emerald-600 
+                        text-white shadow-lg shadow-green-600/20 cursor-default"
+                      disabled
                     >
                       <Scale className="w-3 h-3 mr-1" />
                       Balanceado
@@ -1022,15 +1024,26 @@ export default function NoFearCommunityGames() {
                       Novo Sorteio
                     </Button>
                     <Button
-                      variant="outline"
                       onClick={() => {
                         setResult(null);
                         setCurrentMatch(null);
                       }}
-                      className="border-white/20 text-white/60 hover:text-white 
-                        hover:border-white/30 hover:bg-white/5 transition-all duration-200"
+                      className="flex-1 py-4 text-base font-bold 
+                        bg-gradient-to-r from-amber-500 to-orange-500
+                        hover:from-amber-400 hover:to-orange-400
+                        text-white shadow-lg shadow-amber-500/20
+                        transition-all duration-200 rounded-xl"
                     >
                       Editar Jogadores
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleReset}
+                      className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300
+                        hover:border-red-500/50 transition-all duration-200"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Resetar Tudo
                     </Button>
                   </motion.div>
                 </motion.div>
@@ -1068,37 +1081,39 @@ export default function NoFearCommunityGames() {
             </motion.div>
           </TabsContent>
         </Tabs>
-          {/* 🔥 SEO CONTENT (IMPORTANTE PARA GOOGLE) */}
-          <section className="mt-16 max-w-3xl mx-auto text-sm text-white/70 space-y-4 px-4">
-            <h2 className="text-lg font-bold text-white">
-              CS2 Team Balance Tool
-            </h2>
 
-            <p>
-              This CS2 team balance tool automatically creates fair teams in Counter-Strike 2.
-              It distributes players based on skill level to ensure competitive and balanced matches.
-            </p>
+        {/* 🔥 SEO CONTENT (IMPORTANTE PARA GOOGLE) */}
+        <section className="mt-16 max-w-3xl mx-auto text-sm text-white/70 space-y-4 px-4">
+          <h2 className="text-lg font-bold text-white">
+            CS2 Team Balance Tool
+          </h2>
 
-            <h3 className="text-md font-semibold text-white">
-              How to balance teams in CS2
-            </h3>
+          <p>
+            This CS2 team balance tool automatically creates fair teams in Counter-Strike 2.
+            It distributes players based on skill level to ensure competitive and balanced matches.
+          </p>
 
-            <p>
-              Balancing teams manually in CS2 can be difficult. This tool uses a deterministic algorithm
-              to generate fair teams instantly. Just enter player levels and generate teams.
-            </p>
+          <h3 className="text-md font-semibold text-white">
+            How to balance teams in CS2
+          </h3>
 
-            <h3 className="text-md font-semibold text-white">
-              Why use this CS2 team balancer?
-            </h3>
+          <p>
+            Balancing teams manually in CS2 can be difficult. This tool uses a deterministic algorithm
+            to generate fair teams instantly. Just enter player levels and generate teams.
+          </p>
 
-            <ul className="list-disc ml-4">
-              <li>Fair matches</li>
-              <li>Fast team generation</li>
-              <li>Perfect for 5v5 lobbies</li>
-              <li>Ideal for friends and competitive games</li>
-            </ul>
-          </section>
+          <h3 className="text-md font-semibold text-white">
+            Why use this CS2 team balancer?
+          </h3>
+
+          <ul className="list-disc ml-4">
+            <li>Fair matches</li>
+            <li>Fast team generation</li>
+            <li>Perfect for 5v5 lobbies</li>
+            <li>Ideal for friends and competitive games</li>
+          </ul>
+        </section>
+
         {/* Footer */}
         <motion.div
           initial={{ opacity: 0 }}
