@@ -13,6 +13,20 @@ export function BalanceIndicator({ diff, ctSum, trSum, total }: BalanceIndicator
   const ctPercent = (ctSum / total) * 100;
   const trPercent = (trSum / total) * 100;
 
+  // Ajustado para escala 1-21 (total máximo: 105)
+  // 0 = perfeito, <=5 = bom (≈5% do total), >5 = precisa melhorar
+  const getDiffColor = () => {
+    if (diff === 0) return 'text-green-400';
+    if (diff <= 5) return 'text-amber-400';
+    return 'text-red-400';
+  };
+
+  const getDiffLabel = () => {
+    if (diff === 0) return 'Perfeito';
+    if (diff <= 5) return 'Bom';
+    return 'Precisa Melhorar';
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -22,12 +36,13 @@ export function BalanceIndicator({ diff, ctSum, trSum, total }: BalanceIndicator
     >
       <div className="text-center mb-3">
         <div className="text-[10px] text-white/40 font-bold tracking-widest uppercase mb-1">
-          Diferença de Nível
+          Qualidade do Balanceamento
         </div>
-        <div className={`text-2xl font-black ${
-          diff === 0 ? 'text-green-400' : diff <= 2 ? 'text-amber-400' : 'text-red-400'
-        }`}>
+        <div className={`text-2xl font-black ${getDiffColor()}`}>
           {diff}
+        </div>
+        <div className={`text-xs font-medium mt-1 ${getDiffColor()}`}>
+          {getDiffLabel()}
         </div>
       </div>
       

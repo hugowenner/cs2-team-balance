@@ -1,6 +1,3 @@
-// src/components/history/MatchPreviewModal.tsx
-"use client";
-
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -8,13 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, Scale, Shuffle, Users, RefreshCw } from 'lucide-react';
 import type { Match } from '@/types/match';
-import { toast } from 'sonner';
 
 interface MatchPreviewModalProps {
   match: Match | null;
   isOpen: boolean;
   onClose: () => void;
-  onRecreate: (match: Match) => void;
+  onRecreate: () => void;
   isRecreating?: boolean;
 }
 
@@ -25,14 +21,6 @@ export function MatchPreviewModal({
   onRecreate, 
   isRecreating = false 
 }: MatchPreviewModalProps) {
-  const handleRecreate = () => {
-    if (!match) return;
-    
-    onRecreate(match);
-    toast.success("Partida carregada com sucesso!");
-    onClose();
-  };
-
   return (
     <AnimatePresence>
       {isOpen && match && (
@@ -48,7 +36,14 @@ export function MatchPreviewModal({
                   )}
                   Detalhes da Partida
                 </DialogTitle>
-                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className="h-8 w-8 hover:bg-white/10"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
             </DialogHeader>
             
@@ -152,7 +147,7 @@ export function MatchPreviewModal({
                   Fechar
                 </Button>
                 <Button 
-                  onClick={handleRecreate} 
+                  onClick={onRecreate} 
                   disabled={isRecreating}
                   className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white"
                 >

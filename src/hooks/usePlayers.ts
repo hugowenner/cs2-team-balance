@@ -1,43 +1,80 @@
-import { useState, useCallback } from 'react';
-import type { Player } from '@/types/match';
+import { useState, useCallback, useMemo } from 'react';
 
-const INITIAL_PLAYERS = (): Player[] =>
-  Array.from({ length: 10 }, () => ({ name: '', level: 5 }));
+const INITIAL_PLAYERS = Array.from({ length: 10 }, () => ({
+  name: '',
+  level: 1,
+}));
 
 export function usePlayers() {
-  const [players, setPlayers] = useState<Player[]>(INITIAL_PLAYERS);
-  const [errors, setErrors] = useState(false);
+  const [players, setPlayers] = useState(INITIAL_PLAYERS);
+  const [errors, setErrors] = useState<boolean[]>(new Array(10).fill(false));
 
-  const handleChange = useCallback((index: number, field: string, value: string | number) => {
-    setPlayers((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
-      return next;
+  const handleChange = useCallback((index: number, field: 'name' | 'level', value: string | number) => {
+    setPlayers(prev => {
+      const newPlayers = [...prev];
+      if (field === 'name') {
+        newPlayers[index] = { ...newPlayers[index], name: value as string };
+      } else if (field === 'level') {
+        // Validação para garantir que o nível esteja entre 1 e 21
+        const numValue = Number(value);
+        const validLevel = Math.min(21, Math.max(1, isNaN(numValue) ? 1 : numValue));
+        newPlayers[index] = { ...newPlayers[index], level: validLevel };
+      }
+      return newPlayers;
     });
-    if (errors) setErrors(false);
+    
+    // Limpa erro ao digitar
+    if (errors[index] && field === 'name' && value) {
+      setErrors(prev => {
+        const newErrors = [...prev];
+        newErrors[index] = false;
+        return newErrors;
+      });
+    }
   }, [errors]);
 
-  const setPlayersData = useCallback((newPlayers: Player[]) => {
-    setPlayers(newPlayers);
-  }, []);
+  const triggerErrors = useCallback(() => {
+    const newErrors = players.map(p => !p.name.trim());
+    setErrors(newErrors);
+    return newErrors;
+  }, [players]);
 
   const resetPlayers = useCallback(() => {
-    setPlayers(INITIAL_PLAYERS());
-    setErrors(false);
+    setPlayers(INITIAL_PLAYERS);
+    setErrors(new Array(10).fill(false));
   }, []);
 
-  const triggerErrors = useCallback(() => {
-    setErrors(true);
+  const setPlayersData = useCallback((newPlayers: typeof INITIAL_PLAYERS) => {
+    // Valida todos os níveis ao definir os jogadores
+    const validatedPlayers = newPlayers.map(p => ({
+      ...p,
+      level: Math.min(21, Math.max(1, p.level))
+    }));
+    setPlayers(validatedPlayers);
+    setErrors(new Array(10).fill(false));
   }, []);
 
-  const clearErrors = useCallback(() => {
-    setErrors(false);
-  }, []);
+  const filledCount = useMemo(() => 
+    players.filter(p => p.name.trim()).length, 
+    [players]
+  );
 
-  const isValid = players.every((p) => p.name.trim().length > 0);
-  const filledCount = players.filter((p) => p.name.trim()).length;
-  const avgLevel = (players.reduce((s, p) => s + p.level, 0) / 10).toFixed(1);
-  const totalPoints = players.reduce((s, p) => s + p.level, 0);
+  const avgLevel = useMemo(() => {
+    const validPlayers = players.filter(p => p.name.trim());
+    if (validPlayers.length === 0) return '0.0';
+    const sum = validPlayers.reduce((acc, p) => acc + p.level, 0);
+    return (sum / validPlayers.length).toFixed(1);
+  }, [players]);
+
+  const totalPoints = useMemo(() => 
+    players.reduce((acc, p) => acc + (p.name.trim() ? p.level : 0), 0),
+    [players]
+  );
+
+  const isValid = useMemo(() => 
+    players.every(p => p.name.trim()),
+    [players]
+  );
 
   return {
     players,
@@ -50,6 +87,5 @@ export function usePlayers() {
     setPlayersData,
     resetPlayers,
     triggerErrors,
-    clearErrors,
   };
 }

@@ -1,55 +1,74 @@
 "use client";
 
+import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { AlertCircle } from 'lucide-react';
 import type { Player } from '@/types/match';
 
 interface PlayerInputProps {
   index: number;
   player: Player;
-  onChange: (index: number, field: string, value: string | number) => void;
-  hasError: boolean;
+  onChange: (index: number, field: 'name' | 'level', value: string | number) => void;
+  hasError: boolean[];
 }
 
 export function PlayerInput({ index, player, onChange, hasError }: PlayerInputProps) {
+  const displayIndex = index + 1;
+  const hasNameError = hasError[index];
+
   return (
-    <div className="flex gap-2">
-      <div className="w-8 h-10 rounded-lg bg-gradient-to-br from-white/10 to-white/5 
-        border border-white/20 flex items-center justify-center text-[10px] font-black text-white/60">
-        {index + 1}
-      </div>
-      <Input
-        placeholder="Nome do jogador"
-        value={player.name}
-        onChange={(e) => onChange(index, 'name', e.target.value)}
-        className={`flex-1 h-10 bg-[#0b1220] border-white/10 text-sm font-medium
-          focus:border-cyan-500/50 focus:shadow-[0_0_20px_rgba(0,242,255,0.1)]
-          transition-all duration-200 ${
-          hasError && !player.name.trim() 
-            ? 'border-red-500/50 bg-red-500/5' 
-            : ''
-        }`}
-      />
-      <div className="relative">
-        <select
-          value={player.level}
-          onChange={(e) => onChange(index, 'level', Number(e.target.value))}
-          className="h-10 w-16 rounded-lg bg-[#0b1220] border border-white/10 
-            text-sm font-medium text-white/80 appearance-none cursor-pointer
-            focus:border-cyan-500/50 focus:shadow-[0_0_20px_rgba(0,242,255,0.1)]
-            transition-all duration-200 pl-3 pr-7"
-        >
-          {[1,2,3,4,5,6,7,8,9,10].map(lvl => (
-            <option key={lvl} value={lvl} className="bg-[#0b1220] text-white">
-              {lvl}
-            </option>
-          ))}
-        </select>
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
-          <svg className="w-3 h-3 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.03 }}
+      className="relative"
+    >
+      <div className="flex items-center gap-2">
+        <div className="flex-shrink-0 w-7 h-7 rounded-md bg-white/5 border border-white/10 
+          flex items-center justify-center text-xs font-bold text-white/40">
+          {displayIndex}
+        </div>
+        
+        <div className="flex-1 relative">
+          <Input
+            placeholder={`Jogador ${displayIndex}`}
+            value={player.name}
+            onChange={(e) => onChange(index, 'name', e.target.value)}
+            className={`h-9 text-sm pr-8 bg-white/5 border-white/10 
+              focus:border-cyan-500/50 focus:shadow-[0_0_20px_rgba(0,242,255,0.1)]
+              transition-all duration-200
+              ${hasNameError ? 'border-red-500/50 bg-red-500/5' : ''}`}
+          />
+          {hasNameError && (
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              <AlertCircle className="w-4 h-4 text-red-400" />
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-1">
+          <Label className="text-xs text-white/40 font-medium">Nível</Label>
+          <select
+            value={player.level}
+            onChange={(e) => {
+              const value = Number(e.target.value);
+              // Validação para garantir que está entre 1 e 21
+              const validValue = Math.min(21, Math.max(1, value));
+              onChange(index, 'level', validValue);
+            }}
+            className="w-16 h-9 px-2 text-sm bg-white/5 border border-white/10 
+              rounded-md focus:border-cyan-500/50 focus:outline-none
+              transition-all duration-200"
+          >
+            {Array.from({ length: 21 }, (_, i) => i + 1).map(level => (
+              <option key={level} value={level} className="bg-zinc-900">
+                {level}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

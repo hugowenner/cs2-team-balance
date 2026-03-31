@@ -1,4 +1,3 @@
-// src/app/NoFearCommunityGames.tsx
 "use client";
 
 import { useCallback, useState } from 'react';
@@ -8,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner'; // Importando o toast
+import { toast } from 'sonner';
 import { 
   Users, 
   Target, 
@@ -29,7 +28,7 @@ import { PlayerInput } from '@/components/players/PlayerInput';
 import { TeamCard } from '@/components/teams/TeamCard';
 import { BalanceIndicator } from '@/components/teams/BalanceIndicator';
 import { MatchHistory } from '@/components/history/MatchHistory';
-import { MatchPreviewModal } from '@/components/history/MatchPreviewModal'; // Importando o novo modal
+import { MatchPreviewModal } from '@/components/history/MatchPreviewModal';
 
 // Hooks
 import { usePlayers } from '@/hooks/usePlayers';
@@ -89,12 +88,12 @@ export default function NoFearCommunityGames() {
     handleShuffle(players, isValid, triggerErrors);
   }, [handleShuffle, players, isValid, triggerErrors]);
 
-  // NOVO: Handler para ABRIR o modal de visualização
+  // Handler para ABRIR o modal de visualização
   const handleViewMatch = useCallback((match: Match) => {
     setSelectedMatchForView(match);
   }, []);
 
-  // NOVO: Handler para RECRIAR a partida (vindo do modal)
+  // Handler para RECRIAR a partida (vindo do modal)
   const handleRecreateMatch = useCallback(() => {
     if (!selectedMatchForView) return;
     
@@ -591,10 +590,10 @@ export default function NoFearCommunityGames() {
               </div>
               <MatchHistory
                 matches={historyMatches}
-                onSelect={handleViewMatch} // PASSANDO O NOVO HANDLER DE VISUALIZAÇÃO
+                onSelect={handleViewMatch}
                 onDelete={deleteMatch}
                 loading={historyLoading}
-                isRecreating={isRecreating} // PASSANDO O ESTADO DE RECREAÇÃO
+                isRecreating={isRecreating}
               />
             </motion.div>
           </TabsContent>
