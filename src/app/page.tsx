@@ -171,7 +171,17 @@ export default function NoFearCommunityGames() {
             <span className="text-white"> CS2</span>
           </h1>
 
-          <p className="text-xs sm:text-sm text-white/35 font-medium tracking-wide">
+          <p
+            className="
+              mt-3
+              text-base sm:text-lg lg:text-xl
+              font-semibold
+              tracking-wide
+              leading-relaxed
+              bg-gradient-to-r from-cyan-400 via-sky-400 to-purple-400
+              bg-clip-text text-transparent
+            "
+          >
             Monte partidas equilibradas com precisão e jogue em nível competitivo de verdade.
           </p>
         </motion.div>
