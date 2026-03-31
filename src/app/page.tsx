@@ -1,12 +1,14 @@
+// src/app/NoFearCommunityGames.tsx
 "use client";
-import { useState, useCallback, useEffect } from 'react';
+
+import { useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from 'sonner'; // Importando o toast
 import { 
   Users, 
   Target, 
@@ -17,590 +19,121 @@ import {
   Scale, 
   Shuffle, 
   History, 
-  Trash2, 
-  ChevronRight, 
-  Copy, 
-  Check 
+  Trash2,
+  Copy,
+  Check
 } from 'lucide-react';
 
+// Components
+import { PlayerInput } from '@/components/players/PlayerInput';
+import { TeamCard } from '@/components/teams/TeamCard';
+import { BalanceIndicator } from '@/components/teams/BalanceIndicator';
+import { MatchHistory } from '@/components/history/MatchHistory';
+import { MatchPreviewModal } from '@/components/history/MatchPreviewModal'; // Importando o novo modal
+
+// Hooks
+import { usePlayers } from '@/hooks/usePlayers';
+import { useMatch } from '@/hooks/useMatch';
+import { useMatchHistory } from '@/hooks/useMatchHistory';
+
 // Types
-interface Player {
-  name: string;
-  level: number;
-}
+import type { Match } from '@/types/match';
 
-interface TeamResult {
-  ct: Player[];
-  tr: Player[];
-  ctSum: number;
-  trSum: number;
-  diff: number;
-  total: number;
-}
-
-interface Match {
-  id: string;
-  players: Player[];
-  result: TeamResult;
-  mode: GameMode;
-  seed: string;
-  createdAt: string;
-  diff: number;
-}
-
-type GameMode = 'BALANCED' | 'RANDOM';
-
-// ─────────────────────────────────────────────
-// COMPONENTE DE INPUT DE JOGADOR
-// ─────────────────────────────────────────────
-function PlayerInput({ 
-  index, 
-  player, 
-  onChange, 
-  hasError 
-}: { 
-  index: number; 
-  player: Player; 
-  onChange: (index: number, field: string, value: string | number) => void;
-  hasError: boolean;
-}) {
-  return (
-    <div className="flex gap-2">
-      <div className="w-8 h-10 rounded-lg bg-gradient-to-br from-white/10 to-white/5 
-        border border-white/20 flex items-center justify-center text-[10px] font-black text-white/60">
-        {index + 1}
-      </div>
-      <Input
-        placeholder="Nome do jogador"
-        value={player.name}
-        onChange={(e) => onChange(index, 'name', e.target.value)}
-        className={`flex-1 h-10 bg-[#0b1220] border-white/10 text-sm font-medium
-          focus:border-cyan-500/50 focus:shadow-[0_0_20px_rgba(0,242,255,0.1)]
-          transition-all duration-200 ${
-          hasError && !player.name.trim() 
-            ? 'border-red-500/50 bg-red-500/5' 
-            : ''
-        }`}
-      />
-      <div className="relative">
-        <select
-          value={player.level}
-          onChange={(e) => onChange(index, 'level', Number(e.target.value))}
-          className="h-10 w-16 rounded-lg bg-[#0b1220] border border-white/10 
-            text-sm font-medium text-white/80 appearance-none cursor-pointer
-            focus:border-cyan-500/50 focus:shadow-[0_0_20px_rgba(0,242,255,0.1)]
-            transition-all duration-200 pl-3 pr-7"
-        >
-          {[1,2,3,4,5,6,7,8,9,10].map(lvl => (
-            <option key={lvl} value={lvl} className="bg-[#0b1220] text-white">
-              {lvl}
-            </option>
-          ))}
-        </select>
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
-          <svg className="w-3 h-3 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// COMPONENTE DE TIME
-// ─────────────────────────────────────────────
-function TeamCard({ 
-  team, 
-  side, 
-  sum, 
-  isStronger, 
-  delay 
-}: { 
-  team: Player[]; 
-  side: 'CT' | 'TR'; 
-  sum: number; 
-  isStronger: boolean;
-  delay: number;
-}) {
-  const sideColors = {
-    CT: 'from-cyan-600 to-blue-600',
-    TR: 'from-red-600 to-orange-600'
-  };
-
-  const sideBg = {
-    CT: 'from-cyan-500/5 to-blue-500/5',
-    TR: 'from-red-500/5 to-orange-500/5'
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className={`p-5 rounded-2xl border border-white/10 bg-gradient-to-br ${sideBg[side]} 
-        relative overflow-hidden group`}
-    >
-      {/* Glow Effect */}
-      <div 
-        className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 
-          bg-gradient-to-br ${sideColors[side]} opacity-10`}
-      />
-      
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4 relative">
-        <div className="flex items-center gap-3">
-          <div 
-            className={`w-10 h-10 rounded-xl bg-gradient-to-br ${sideColors[side]} 
-              flex items-center justify-center text-lg font-black text-white shadow-lg`}
-          >
-            {side}
-          </div>
-          <div>
-            <div className="text-[10px] text-white/40 font-bold tracking-widest uppercase">
-              Time {side}
-            </div>
-            <div className="text-2xl font-black text-white">
-              {sum}
-              <span className="text-xs text-white/40 ml-1">pontos</span>
-            </div>
-          </div>
-        </div>
-        {isStronger && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="px-2 py-1 rounded-lg bg-green-500/10 border border-green-500/30"
-          >
-            <span className="text-[10px] font-bold text-green-400">Forte</span>
-          </motion.div>
-        )}
-      </div>
-
-      {/* Players List */}
-      <div className="space-y-2 relative">
-        {team.map((p, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: delay + 0.05 + i * 0.03 }}
-            className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/10
-              hover:bg-white/10 hover:border-white/20 transition-all duration-200"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-white/20 to-white/5 
-                border border-white/20 flex items-center justify-center">
-                <span className="text-[10px] font-bold text-white/60">{i + 1}</span>
-              </div>
-              <span className="text-sm font-medium text-white/90">{p.name}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex gap-0.5">
-                {[...Array(5)].map((_, j) => (
-                  <div
-                    key={j}
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      j < Math.floor(p.level / 2) 
-                        ? 'bg-gradient-to-r from-cyan-400 to-blue-400' 
-                        : 'bg-white/10'
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="text-xs font-bold text-white/60 w-4 text-right">{p.level}</span>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// COMPONENTE DE BALANCE INDICATOR
-// ─────────────────────────────────────────────
-function BalanceIndicator({ 
-  diff, 
-  ctSum, 
-  trSum, 
-  total 
-}: { 
-  diff: number; 
-  ctSum: number; 
-  trSum: number; 
-  total: number; 
-}) {
-  const ctPercent = (ctSum / total) * 100;
-  const trPercent = (trSum / total) * 100;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.3 }}
-      className="p-4 rounded-xl bg-gradient-to-br from-white/5 to-transparent border border-white/10"
-    >
-      <div className="text-center mb-3">
-        <div className="text-[10px] text-white/40 font-bold tracking-widest uppercase mb-1">
-          Diferença de Nível
-        </div>
-        <div className={`text-2xl font-black ${
-          diff === 0 ? 'text-green-400' : diff <= 2 ? 'text-amber-400' : 'text-red-400'
-        }`}>
-          {diff}
-        </div>
-      </div>
-      
-      <div className="relative h-8 rounded-full bg-[#0b1220] border border-white/10">
-        <div 
-          className="absolute left-0 top-0 h-full bg-gradient-to-r from-cyan-600 to-blue-600 
-            transition-all duration-1000 ease-out"
-          style={{ width: `${ctPercent}%` }}
-        />
-        <div 
-          className="absolute right-0 top-0 h-full bg-gradient-to-l from-red-600 to-orange-600 
-            transition-all duration-1000 ease-out"
-          style={{ width: `${trPercent}%` }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs font-black text-white/80 bg-[#080c14] px-2 py-1 rounded-md">
-            Diferença: {diff}
-          </span>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between mt-3 text-xs">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-cyan-400" />
-          <span className="text-white/60">CT: {ctPercent.toFixed(1)}%</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-white/60">TR: {trPercent.toFixed(1)}%</span>
-          <div className="w-2 h-2 rounded-full bg-red-400" />
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// COMPONENTE DE HISTÓRICO
-// ─────────────────────────────────────────────
-function MatchHistory({ 
-  matches, 
-  onSelect, 
-  onDelete, 
-  loading 
-}: { 
-  matches: Match[]; 
-  onSelect: (match: Match) => void;
-  onDelete: (id: string) => void;
-  loading: boolean;
-}) {
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          className="w-10 h-10 rounded-full border-2 border-cyan-500/30 border-t-cyan-500"
-        />
-      </div>
-    );
-  }
-
-  if (matches.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 
-          flex items-center justify-center mx-auto mb-4">
-          <History className="w-8 h-8 text-white/30" />
-        </div>
-        <p className="text-sm text-white/40 font-medium">Nenhuma partida no histórico</p>
-        <p className="text-xs text-white/20 mt-1">As partidas aparecem aqui após o sorteio</p>
-      </div>
-    );
-  }
-
-  return (
-    <ScrollArea className="h-[450px] pr-2">
-      <div className="space-y-3">
-        {matches.map((match, idx) => (
-          <motion.div
-            key={match.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.05 }}
-            className="group relative p-4 rounded-xl border border-white/10 
-              bg-gradient-to-br from-white/5 to-transparent 
-              hover:from-white/10 hover:border-white/20 
-              transition-all duration-300 cursor-pointer overflow-hidden"
-            onClick={() => onSelect(match)}
-          >
-            {/* Hover Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5 
-              opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
-            <div className="relative">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div 
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase 
-                      flex items-center gap-1 ${
-                      match.mode === 'BALANCED' 
-                        ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
-                        : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                    }`}
-                  >
-                    {match.mode === 'BALANCED' ? <Scale className="w-3 h-3" /> : <Shuffle className="w-3 h-3" />}
-                    {match.mode === 'BALANCED' ? 'Balanceado' : 'Random'}
-                  </div>
-                  <div className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10">
-                    <span className="text-[10px] font-mono text-white/40">{match.seed}</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-white/30">
-                    {new Date(match.createdAt).toLocaleString('pt-BR', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-all duration-200 
-                      hover:bg-red-500/10 hover:text-red-400"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDelete(match.id);
-                    }}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Teams */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-cyan-400">CT</span>
-                    <span className="text-xs font-bold text-white/60">{match.result.ctSum}</span>
-                  </div>
-                  <div className="space-y-1">
-                    {match.result.ct.slice(0, 3).map((p, i) => (
-                      <div key={i} className="text-[10px] text-white/40 truncate">
-                        {p.name}
-                      </div>
-                    ))}
-                    {match.result.ct.length > 3 && (
-                      <div className="text-[10px] text-white/20">
-                        +{match.result.ct.length - 3} mais
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="space-y-1.5 text-right">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white/60">{match.result.trSum}</span>
-                    <span className="text-xs font-bold text-red-400">TR</span>
-                  </div>
-                  <div className="space-y-1">
-                    {match.result.tr.slice(0, 3).map((p, i) => (
-                      <div key={i} className="text-[10px] text-white/40 truncate">
-                        {p.name}
-                      </div>
-                    ))}
-                    {match.result.tr.length > 3 && (
-                      <div className="text-[10px] text-white/20">
-                        +{match.result.tr.length - 3} mais
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Footer */}
-              <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5">
-                <div 
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                    match.diff === 0 
-                      ? 'bg-green-500/10 text-green-400' 
-                      : match.diff <= 2 
-                        ? 'bg-amber-500/10 text-amber-400' 
-                        : 'bg-red-500/10 text-red-400'
-                  }`}
-                >
-                  Diff: {match.diff}
-                </div>
-                <div className="flex items-center gap-1 text-cyan-400 opacity-0 
-                  group-hover:opacity-100 transition-opacity duration-200">
-                  <span className="text-xs font-medium">Ver</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </ScrollArea>
-  );
-}
-
-// ─────────────────────────────────────────────
-// COMPONENTE PRINCIPAL
-// ─────────────────────────────────────────────
 export default function NoFearCommunityGames() {
-  // Estados
-  const [players, setPlayers] = useState<Player[]>(
-    Array.from({ length: 10 }, () => ({ name: '', level: 5 }))
-  );
-  const [result, setResult] = useState<TeamResult | null>(null);
-  const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState(false);
-  const [mode, setMode] = useState<GameMode>('BALANCED');
-  const [customSeed, setCustomSeed] = useState('');
-  const [useCustomSeed, setUseCustomSeed] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  
-  // Histórico
-  const [historyMatches, setHistoryMatches] = useState<Match[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
+  // Estado para o modal de visualização
+  const [selectedMatchForView, setSelectedMatchForView] = useState<Match | null>(null);
+  const [isRecreating, setIsRecreating] = useState(false);
+
+  // Players Hook
+  const {
+    players,
+    errors,
+    isValid,
+    filledCount,
+    avgLevel,
+    totalPoints,
+    handleChange,
+    setPlayersData,
+    resetPlayers,
+    triggerErrors,
+  } = usePlayers();
+
+  // Match Hook
+  const {
+    result,
+    currentMatch,
+    loading,
+    mode,
+    customSeed,
+    useCustomSeed,
+    copied,
+    setCustomSeed,
+    setUseCustomSeed,
+    handleShuffle,
+    loadMatch,
+    clearResult,
+    resetAll,
+    handleCopySeed,
+  } = useMatch();
+
+  // History Hook
+  const {
+    matches: historyMatches,
+    loading: historyLoading,
+    loadHistory,
+    deleteMatch,
+  } = useMatchHistory();
 
   // Handlers
-  const handleChange = useCallback((index: number, field: string, value: string | number) => {
-    setPlayers(prev => {
-      const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
-      return next;
-    });
-    if (errors) setErrors(false);
-  }, [errors]);
+  const onShuffle = useCallback(() => {
+    handleShuffle(players, isValid, triggerErrors);
+  }, [handleShuffle, players, isValid, triggerErrors]);
 
-  const isValid = players.every(p => p.name.trim().length > 0);
+  // NOVO: Handler para ABRIR o modal de visualização
+  const handleViewMatch = useCallback((match: Match) => {
+    setSelectedMatchForView(match);
+  }, []);
 
-  // Carregar histórico
-  const loadHistory = useCallback(async () => {
-    setHistoryLoading(true);
-    try {
-      const res = await fetch('/api/matches?limit=50');
-      const data = await res.json();
-      if (data.success) {
-        setHistoryMatches(data.data);
+  // NOVO: Handler para RECRIAR a partida (vindo do modal)
+  const handleRecreateMatch = useCallback(() => {
+    if (!selectedMatchForView) return;
+    
+    setIsRecreating(true);
+    // Simula um pequeno atraso para dar feedback visual
+    setTimeout(() => {
+      loadMatch(selectedMatchForView);
+      setPlayersData(selectedMatchForView.players);
+      setSelectedMatchForView(null); // Fecha o modal
+      setIsRecreating(false);
+      toast.success('Partida recriada com sucesso! Você pode editar os jogadores ou sortear novamente.');
+    }, 500);
+  }, [selectedMatchForView, loadMatch, setPlayersData]);
+
+  // Handler para fechar o modal
+  const handleCloseModal = useCallback(() => {
+    setSelectedMatchForView(null);
+  }, []);
+
+  const onReset = useCallback(() => {
+    if (window.confirm('Tem certeza que deseja limpar tudo?')) {
+      resetPlayers();
+      resetAll();
+    }
+  }, [resetPlayers, resetAll]);
+
+  const handleTabChange = useCallback(
+    (tab: string) => {
+      if (tab === 'history') {
+        loadHistory();
       }
-    } catch (error) {
-      console.error('Error loading history:', error);
-    }
-    setHistoryLoading(false);
-  }, []);
-
-  // Carregar histórico quando a tab é selecionada
-  const handleTabChange = useCallback((tab: string) => {
-    if (tab === 'history') {
-      loadHistory();
-    }
-  }, [loadHistory]);
-
-  // Gerar times
-  const handleShuffle = useCallback(async () => {
-    if (!isValid) {
-      setErrors(true);
-      return;
-    }
-
-    setLoading(true);
-    setResult(null);
-    setCurrentMatch(null);
-
-    try {
-      const res = await fetch('/api/matches', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          players: players.map(p => ({ ...p, name: p.name.trim() })),
-          mode,
-          seed: useCustomSeed ? customSeed : undefined
-        })
-      });
-
-      const data = await res.json();
-      
-      if (data.success) {
-        setResult(data.data.result);
-        setCurrentMatch(data.data);
-      } else {
-        console.error('Error:', data.error);
-      }
-    } catch (error) {
-      console.error('Error creating match:', error);
-    }
-
-    setLoading(false);
-  }, [players, mode, isValid, useCustomSeed, customSeed]);
-
-  // Reexecutar partida do histórico
-  const handleSelectMatch = useCallback((match: Match) => {
-    setResult(match.result);
-    setCurrentMatch(match);
-    setPlayers(match.players);
-    setMode(match.mode);
-    setCustomSeed(match.seed);
-    setUseCustomSeed(true);
-    setShowHistory(false);
-  }, []);
-
-  // Deletar partida
-  const handleDeleteMatch = useCallback(async (id: string) => {
-    try {
-      await fetch(`/api/matches/${id}`, { method: 'DELETE' });
-      setHistoryMatches(prev => prev.filter(m => m.id !== id));
-    } catch (error) {
-      console.error('Error deleting match:', error);
-    }
-  }, []);
-
-  // ─────────────────────────────────────────────
-  // FUNÇÃO DE RESET COMPLETO
-  // ─────────────────────────────────────────────
-  const handleReset = useCallback(() => {
-    if (window.confirm("Tem certeza que deseja limpar tudo?")) {
-      setPlayers(Array.from({ length: 10 }, () => ({ name: '', level: 5 })));
-      setResult(null);
-      setCurrentMatch(null);
-      setErrors(false);
-      setCustomSeed('');
-      setUseCustomSeed(false);
-    }
-  }, []);
-
-  // Copiar seed
-  const handleCopySeed = useCallback(() => {
-    if (currentMatch?.seed) {
-      navigator.clipboard.writeText(currentMatch.seed);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  }, [currentMatch]);
-
-  // Estatísticas
-  const avgLevel = (players.reduce((s, p) => s + p.level, 0) / 10).toFixed(1);
-  const totalPoints = players.reduce((s, p) => s + p.level, 0);
-  const filledCount = players.filter(p => p.name.trim()).length;
+    },
+    [loadHistory]
+  );
 
   return (
     <div className="min-h-screen bg-[#080c14] text-white font-sans relative overflow-x-hidden">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        {/* Grid */}
         <div 
           className="absolute inset-0 opacity-30"
           style={{
@@ -611,7 +144,6 @@ export default function NoFearCommunityGames() {
             backgroundSize: '40px 40px',
           }}
         />
-        {/* Glows */}
         <div 
           className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full"
           style={{ background: 'radial-gradient(circle, rgba(0, 242, 255, 0.08) 0%, transparent 70%)' }}
@@ -622,7 +154,7 @@ export default function NoFearCommunityGames() {
         />
       </div>
 
-      {/* Conteúdo */}
+      {/* Main Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-6 sm:py-10">
         {/* Header */}
         <motion.div
@@ -646,9 +178,7 @@ export default function NoFearCommunityGames() {
           </motion.div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight mb-2">
-            <span 
-              className="bg-gradient-to-r from-cyan-400 via-sky-400 to-purple-400 bg-clip-text text-transparent"
-            >
+            <span className="bg-gradient-to-r from-cyan-400 via-sky-400 to-purple-400 bg-clip-text text-transparent">
               No Fear
             </span>
             <span className="text-white"> CS2</span>
@@ -659,7 +189,7 @@ export default function NoFearCommunityGames() {
           </p>
         </motion.div>
 
-        {/* Tabs: Sortear / Histórico */}
+        {/* Tabs */}
         <Tabs defaultValue="play" className="w-full" onValueChange={handleTabChange}>
           <TabsList className="w-full grid grid-cols-2 mb-6 bg-[#0b1220] rounded-xl p-1 h-auto border border-white/10">
             <TabsTrigger 
@@ -687,7 +217,7 @@ export default function NoFearCommunityGames() {
           </TabsList>
 
           <TabsContent value="play">
-            {/* Configurações */}
+            {/* Settings */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -695,7 +225,6 @@ export default function NoFearCommunityGames() {
               className="mb-6 p-4 rounded-xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent"
             >
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {/* Modo */}
                 <div>
                   <Label className="text-xs text-white/50 mb-2 block">Modo de Geração</Label>
                   <div className="flex gap-2">
@@ -711,7 +240,6 @@ export default function NoFearCommunityGames() {
                   </div>
                 </div>
 
-                {/* Seed */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <Label className="text-xs text-white/50">Seed Manual</Label>
@@ -733,7 +261,6 @@ export default function NoFearCommunityGames() {
                   />
                 </div>
 
-                {/* Info */}
                 <div className="flex items-center justify-center">
                   <div className="text-center p-3 rounded-lg bg-white/5 border border-white/10">
                     <div className="text-[10px] text-white/30 uppercase tracking-wider mb-1">
@@ -747,10 +274,10 @@ export default function NoFearCommunityGames() {
               </div>
             </motion.div>
 
-            {/* Grid de Jogadores - ANTES DO SORTEIO (INTERFACE NEUTRA) */}
+            {/* Players Grid - Before Shuffle */}
             {!result && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-                {/* Lista 1 - Jogadores 1-5 */}
+                {/* List 1 - Players 1-5 */}
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -758,10 +285,8 @@ export default function NoFearCommunityGames() {
                   className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent"
                 >
                   <div className="flex items-center gap-3 mb-4 pb-3 border-b border-white/10">
-                    <div 
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black
-                        bg-gradient-to-br from-white/10 to-white/5 border border-white/20"
-                    >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black
+                      bg-gradient-to-br from-white/10 to-white/5 border border-white/20">
                       <Users className="w-4 h-4 text-white/60" />
                     </div>
                     <div>
@@ -773,18 +298,18 @@ export default function NoFearCommunityGames() {
                   </div>
                   <div className="space-y-2">
                     {players.slice(0, 5).map((p, i) => (
-                      <PlayerInput 
-                        key={i} 
-                        index={i} 
-                        player={p} 
-                        onChange={handleChange} 
-                        hasError={errors} 
+                      <PlayerInput
+                        key={i}
+                        index={i}
+                        player={p}
+                        onChange={handleChange}
+                        hasError={errors}
                       />
                     ))}
                   </div>
                 </motion.div>
 
-                {/* Lista 2 - Jogadores 6-10 */}
+                {/* List 2 - Players 6-10 */}
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -792,10 +317,8 @@ export default function NoFearCommunityGames() {
                   className="p-4 sm:p-5 rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent"
                 >
                   <div className="flex items-center gap-3 mb-4 pb-3 border-b border-white/10">
-                    <div 
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black
-                        bg-gradient-to-br from-white/10 to-white/5 border border-white/20"
-                    >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black
+                      bg-gradient-to-br from-white/10 to-white/5 border border-white/20">
                       <Users className="w-4 h-4 text-white/60" />
                     </div>
                     <div>
@@ -807,12 +330,12 @@ export default function NoFearCommunityGames() {
                   </div>
                   <div className="space-y-2">
                     {players.slice(5, 10).map((p, i) => (
-                      <PlayerInput 
-                        key={i + 5} 
-                        index={i + 5} 
-                        player={p} 
-                        onChange={handleChange} 
-                        hasError={errors} 
+                      <PlayerInput
+                        key={i + 5}
+                        index={i + 5}
+                        player={p}
+                        onChange={handleChange}
+                        hasError={errors}
                       />
                     ))}
                   </div>
@@ -820,20 +343,20 @@ export default function NoFearCommunityGames() {
               </div>
             )}
 
-            {/* Grid de Times - APÓS O SORTEIO (COM CT/TR) */}
+            {/* Teams Grid - After Shuffle */}
             {result && (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-                <TeamCard 
-                  team={result.ct} 
-                  side="CT" 
-                  sum={result.ctSum} 
+                <TeamCard
+                  team={result.ct}
+                  side="CT"
+                  sum={result.ctSum}
                   isStronger={result.ctSum > result.trSum}
                   delay={0.1}
                 />
-                <TeamCard 
-                  team={result.tr} 
-                  side="TR" 
-                  sum={result.trSum} 
+                <TeamCard
+                  team={result.tr}
+                  side="TR"
+                  sum={result.trSum}
                   isStronger={result.trSum > result.ctSum}
                   delay={0.2}
                 />
@@ -866,7 +389,7 @@ export default function NoFearCommunityGames() {
               ))}
             </motion.div>
 
-            {/* Empty State - Antes do sorteio */}
+            {/* Empty State */}
             {!result && filledCount === 0 && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -903,14 +426,11 @@ export default function NoFearCommunityGames() {
               )}
             </AnimatePresence>
 
-            {/* Botão Sortear - APENAS ANTES DO RESULTADO */}
+            {/* Shuffle Button */}
             {!result && (
-              <motion.div
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-              >
+              <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
                 <Button
-                  onClick={handleShuffle}
+                  onClick={onShuffle}
                   disabled={loading}
                   className="w-full py-6 sm:py-8 rounded-xl text-sm sm:text-base font-bold 
                     tracking-wider uppercase bg-gradient-to-r from-cyan-600 to-blue-600 
@@ -937,7 +457,7 @@ export default function NoFearCommunityGames() {
               </motion.div>
             )}
 
-            {/* Resultado */}
+            {/* Result */}
             <AnimatePresence>
               {result && currentMatch && (
                 <motion.div
@@ -956,7 +476,7 @@ export default function NoFearCommunityGames() {
                     }}
                   />
 
-                  {/* Header Resultado */}
+                  {/* Result Header */}
                   <div className="text-center mb-6">
                     <div className="text-[10px] text-white/30 font-bold tracking-widest uppercase mb-1">
                       Resultado do Balanceamento
@@ -1000,14 +520,14 @@ export default function NoFearCommunityGames() {
                   </motion.div>
 
                   {/* Balance Indicator */}
-                  <BalanceIndicator 
-                    diff={result.diff} 
-                    ctSum={result.ctSum} 
-                    trSum={result.trSum} 
-                    total={result.total} 
+                  <BalanceIndicator
+                    diff={result.diff}
+                    ctSum={result.ctSum}
+                    trSum={result.trSum}
+                    total={result.total}
                   />
 
-                  {/* Botões de Ação */}
+                  {/* Action Buttons */}
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -1015,7 +535,7 @@ export default function NoFearCommunityGames() {
                     className="mt-6 flex gap-3"
                   >
                     <Button
-                      onClick={handleShuffle}
+                      onClick={onShuffle}
                       className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 
                         hover:from-cyan-500 hover:to-blue-500 shadow-lg shadow-cyan-600/20
                         transition-all duration-200"
@@ -1024,10 +544,7 @@ export default function NoFearCommunityGames() {
                       Novo Sorteio
                     </Button>
                     <Button
-                      onClick={() => {
-                        setResult(null);
-                        setCurrentMatch(null);
-                      }}
+                      onClick={clearResult}
                       className="flex-1 py-4 text-base font-bold 
                         bg-gradient-to-r from-amber-500 to-orange-500
                         hover:from-amber-400 hover:to-orange-400
@@ -1038,7 +555,7 @@ export default function NoFearCommunityGames() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={handleReset}
+                      onClick={onReset}
                       className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300
                         hover:border-red-500/50 transition-all duration-200"
                     >
@@ -1074,38 +591,37 @@ export default function NoFearCommunityGames() {
               </div>
               <MatchHistory
                 matches={historyMatches}
-                onSelect={handleSelectMatch}
-                onDelete={handleDeleteMatch}
+                onSelect={handleViewMatch} // PASSANDO O NOVO HANDLER DE VISUALIZAÇÃO
+                onDelete={deleteMatch}
                 loading={historyLoading}
+                isRecreating={isRecreating} // PASSANDO O ESTADO DE RECREAÇÃO
               />
             </motion.div>
           </TabsContent>
         </Tabs>
 
-        {/* 🔥 SEO CONTENT (IMPORTANTE PARA GOOGLE) */}
-        <section className="mt-16 max-w-3xl mx-auto text-sm text-white/70 space-y-4 px-4">
-          <h2 className="text-lg font-bold text-white">
-            CS2 Team Balance Tool
-          </h2>
+        {/* Modal de Visualização de Partida */}
+        <MatchPreviewModal
+          match={selectedMatchForView}
+          isOpen={!!selectedMatchForView}
+          onClose={handleCloseModal}
+          onRecreate={handleRecreateMatch}
+          isRecreating={isRecreating}
+        />
 
+        {/* SEO Content */}
+        <section className="mt-16 max-w-3xl mx-auto text-sm text-white/70 space-y-4 px-4">
+          <h2 className="text-lg font-bold text-white">CS2 Team Balance Tool</h2>
           <p>
             This CS2 team balance tool automatically creates fair teams in Counter-Strike 2.
             It distributes players based on skill level to ensure competitive and balanced matches.
           </p>
-
-          <h3 className="text-md font-semibold text-white">
-            How to balance teams in CS2
-          </h3>
-
+          <h3 className="text-md font-semibold text-white">How to balance teams in CS2</h3>
           <p>
             Balancing teams manually in CS2 can be difficult. This tool uses a deterministic algorithm
             to generate fair teams instantly. Just enter player levels and generate teams.
           </p>
-
-          <h3 className="text-md font-semibold text-white">
-            Why use this CS2 team balancer?
-          </h3>
-
+          <h3 className="text-md font-semibold text-white">Why use this CS2 team balancer?</h3>
           <ul className="list-disc ml-4">
             <li>Fair matches</li>
             <li>Fast team generation</li>
