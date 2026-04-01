@@ -1,12 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Match, Player, MatchResult } from '@/types/match';
-import { usePlayers } from './usePlayers';
-import { useMatchHistory } from './useMatchHistory';
 
 export function useMatch() {
-  const { players, isValid, triggerErrors } = usePlayers();
-  const { saveMatch } = useMatchHistory();
-  
   const [result, setResult] = useState<MatchResult | null>(null);
   const [currentMatch, setCurrentMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(false);
@@ -108,14 +103,13 @@ export function useMatch() {
         };
         
         setCurrentMatch(match);
-        saveMatch(match);
       }
     } catch (error) {
       console.error('Error generating teams:', error);
     } finally {
       setLoading(false);
     }
-  }, [generateSeed, generateBalancedTeams, mode, saveMatch]);
+  }, [generateSeed, generateBalancedTeams, mode]);
 
   const loadMatch = useCallback((match: Match) => {
     setResult(match.result);

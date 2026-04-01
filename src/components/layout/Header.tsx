@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { History, Shuffle, Globe, MessageCircle } from "lucide-react";
+import { Shuffle, Globe, MessageCircle } from "lucide-react";
 
 type HeaderProps = {
   activeTab: string;
@@ -11,7 +11,6 @@ type HeaderProps = {
 
 const navItems = [
   { key: "play", label: "Sortear", icon: Shuffle },
-  { key: "history", label: "Histórico", icon: History },
 ];
 
 export function Header({ activeTab, onChangeTab }: HeaderProps) {

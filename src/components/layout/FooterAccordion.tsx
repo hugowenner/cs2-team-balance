@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ExternalLink, MessageSquare, AlertCircle, Linkedin, Github, Shield, FileText, Dice1, HelpCircle, Home, History } from 'lucide-react';
+import { ChevronDown, ExternalLink, MessageSquare, Linkedin, Github, Shield, FileText, Dice1, HelpCircle, Home } from 'lucide-react';
 
 const FooterAccordion = () => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -12,8 +12,7 @@ const FooterAccordion = () => {
       icon: <Home className="w-4 h-4" />,
       items: [
         { label: 'Site Oficial', href: 'https://nofear.netlify.app/', external: true },
-        { label: 'Como Funciona', action: () => window.scrollTo({ top: 0, behavior: 'smooth' }) },
-        { label: 'Histórico de Partidas', action: () => document.querySelector('#history')?.scrollIntoView({ behavior: 'smooth' }) }
+        { label: 'Como Funciona', action: () => window.scrollTo({ top: 0, behavior: 'smooth' }) }
       ]
     },
     {

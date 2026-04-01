@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner';
 import { 
   Users, 
   Target, 
@@ -17,7 +16,6 @@ import {
   AlertCircle, 
   Scale, 
   Shuffle, 
-  History, 
   Trash2,
   Copy,
   Check
@@ -30,22 +28,13 @@ import FooterAccordion from '@/components/layout/FooterAccordion';
 import { PlayerInput } from '@/components/players/PlayerInput';
 import { TeamCard } from '@/components/teams/TeamCard';
 import { BalanceIndicator } from '@/components/teams/BalanceIndicator';
-import { MatchHistory } from '@/components/history/MatchHistory';
-import { MatchPreviewModal } from '@/components/history/MatchPreviewModal';
 
 // Hooks
 import { usePlayers } from '@/hooks/usePlayers';
 import { useMatch } from '@/hooks/useMatch';
-import { useMatchHistory } from '@/hooks/useMatchHistory';
-
-// Types
-import type { Match } from '@/types/match';
 
 export default function NoFearCommunityGames() {
-  // Estado para o modal de visualização
   const [activeTab, setActiveTab] = useState("play");
-  const [selectedMatchForView, setSelectedMatchForView] = useState<Match | null>(null);
-  const [isRecreating, setIsRecreating] = useState(false);
 
   // Players Hook
   const {
@@ -56,7 +45,6 @@ export default function NoFearCommunityGames() {
     avgLevel,
     totalPoints,
     handleChange,
-    setPlayersData,
     resetPlayers,
     triggerErrors,
   } = usePlayers();
@@ -73,49 +61,15 @@ export default function NoFearCommunityGames() {
     setCustomSeed,
     setUseCustomSeed,
     handleShuffle,
-    loadMatch,
     clearResult,
     resetAll,
     handleCopySeed,
   } = useMatch();
 
-  // History Hook
-  const {
-    matches: historyMatches,
-    loading: historyLoading,
-    loadHistory,
-    deleteMatch,
-  } = useMatchHistory();
-
   // Handlers
   const onShuffle = useCallback(() => {
     handleShuffle(players, isValid, triggerErrors);
   }, [handleShuffle, players, isValid, triggerErrors]);
-
-  // Handler para ABRIR o modal de visualização
-  const handleViewMatch = useCallback((match: Match) => {
-    setSelectedMatchForView(match);
-  }, []);
-
-  // Handler para RECRIAR a partida (vindo do modal)
-  const handleRecreateMatch = useCallback(() => {
-    if (!selectedMatchForView) return;
-    
-    setIsRecreating(true);
-    // Simula um pequeno atraso para dar feedback visual
-    setTimeout(() => {
-      loadMatch(selectedMatchForView);
-      setPlayersData(selectedMatchForView.players);
-      setSelectedMatchForView(null); // Fecha o modal
-      setIsRecreating(false);
-      toast.success('Partida recriada com sucesso! Você pode editar os jogadores ou sortear novamente.');
-    }, 500);
-  }, [selectedMatchForView, loadMatch, setPlayersData]);
-
-  // Handler para fechar o modal
-  const handleCloseModal = useCallback(() => {
-    setSelectedMatchForView(null);
-  }, []);
 
   const onReset = useCallback(() => {
     if (window.confirm('Tem certeza que deseja limpar tudo?')) {
@@ -127,11 +81,8 @@ export default function NoFearCommunityGames() {
   const handleTabChange = useCallback(
     (tab: string) => {
       setActiveTab(tab);
-      if (tab === 'history') {
-        loadHistory();
-      }
     },
-    [loadHistory]
+    []
   );
 
   return (
@@ -188,7 +139,7 @@ export default function NoFearCommunityGames() {
 
         {/* Tabs - CORRIGIDO PARA USAR value={activeTab} */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className="w-full grid grid-cols-2 mb-6 bg-[#0b1220] rounded-xl p-1 h-auto border border-white/10">
+          <TabsList className="w-full grid grid-cols-1 mb-6 bg-[#0b1220] rounded-xl p-1 h-auto border border-white/10">
             <TabsTrigger 
               value="play" 
               className="rounded-lg py-2.5 text-xs sm:text-sm font-semibold 
@@ -199,17 +150,6 @@ export default function NoFearCommunityGames() {
             >
               <Shuffle className="w-4 h-4 mr-2" />
               Sortear
-            </TabsTrigger>
-            <TabsTrigger 
-              value="history" 
-              className="rounded-lg py-2.5 text-xs sm:text-sm font-semibold 
-                data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-600 
-                data-[state=active]:to-blue-600 data-[state=active]:text-white
-                data-[state=inactive]:text-white/50 hover:text-white/80
-                transition-all duration-200"
-            >
-              <History className="w-4 h-4 mr-2" />
-              Histórico
             </TabsTrigger>
           </TabsList>
 
@@ -565,46 +505,7 @@ export default function NoFearCommunityGames() {
             </AnimatePresence>
           </TabsContent>
 
-          <TabsContent value="history">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white/80 flex items-center gap-2">
-                  <History className="w-5 h-5 text-cyan-400" />
-                  Partidas Anteriores
-                </h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={loadHistory}
-                  className="border-white/20 text-white/60 hover:text-white 
-                    hover:border-white/30 hover:bg-white/5 transition-all duration-200"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-                  Atualizar
-                </Button>
-              </div>
-              <MatchHistory
-                matches={historyMatches}
-                onSelect={handleViewMatch}
-                onDelete={deleteMatch}
-                loading={historyLoading}
-                isRecreating={isRecreating}
-              />
-            </motion.div>
-          </TabsContent>
         </Tabs>
-
-        {/* Modal de Visualização de Partida */}
-        <MatchPreviewModal
-          match={selectedMatchForView}
-          isOpen={!!selectedMatchForView}
-          onClose={handleCloseModal}
-          onRecreate={handleRecreateMatch}
-          isRecreating={isRecreating}
-        />
 
         <FooterAccordion />
       </div>
